@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sepsight</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+</head>
+<body>
+    <nav class="nav navbar navbar-expand-lg navbar-light bg-white pl-5 pr-5">
+        <a class="navbar-brand" href="#"><img src="/static/images/logo.png">Sep<span>sight</span></a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+      
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item active">
+              <a class="nav-link" href="{{url_for('index')}}">Home <span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{url_for('patientData')}}">Patient Data  </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+
+<div class="patient-data" id="patient-data">
+    <div class="container m-3">
+        <h2 class="mt-5 mb-3"><span>Patients <span class="logocol">Data</span></span></h2>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <input type="text" class="form-control" id="search-bar" placeholder="Search by Name or Patient ID" onkeyup="filterTable()">
+            </div>
+        </div>
+        <table class="m-0 table table-striped table-bordered table-hover" id="patient-table">
+            <thead class="thead-dark">
+              <tr>
+                <th scope="col">PatientID</th>
+                <th scope="col">Name</th> 
+                <th scope="col">Gender</th>
+                <th scope="col">Age</th>
+                <th scope="col">Time</th>
+                <th scope="col">HR</th>
+                <th scope="col">O2Sat</th>
+                <th scope="col">Temp</th>
+                <th scope="col">MAP</th>
+                <th scope="col">Resp</th>
+                <th scope="col">BUN</th>
+                <th scope="col">Chloride</th>
+                <th scope="col">Creatinine</th>
+                <th scope="col">Glucose</th>
+                <th scope="col">Hct</th>
+                <th scope="col">Hgb</th>
+                <th scope="col">WBC</th>
+                <th scope="col">Platelets</th>
+                <th scope="col">Predict</th>
+              </tr>
+            </thead>
+            <tbody id="table-body">
+                {% for patient in data %}
+                <tr>
+                    <td>{{ patient[0] }}</td>
+                    <td>{{ patient[1] }}</td>
+
+                    {% if patient[17] == '1' %}
+                    <td>Male</td>
+                    {% else %}
+                    <td>Female</td>
+                    {% endif %}
+                    
+                    <td>{{ patient[16] }}</td>
+                    <td>{{ patient[2] }}</td>
+                    <td>{{ patient[3] }}</td>
+                    <td>{{ patient[4] }}</td>
+                    <td>{{ patient[5] }}</td>
+                    <td>{{ patient[6] }}</td>
+                    <td>{{ patient[7] }}</td>
+                    <td>{{ patient[8] }}</td>
+                    <td>{{ patient[9] }}</td>
+                    <td>{{ patient[10] }}</td>
+                    <td>{{ patient[11] }}</td>
+                    <td>{{ patient[12] }}</td>
+                    <td>{{ patient[13] }}</td>
+                    <td>{{ patient[14] }}</td>
+                    <td>{{ patient[15] }}</td>
+                    <td><a href="/predictSepsis/{{patient[0]}}/{{ patient[1] }}/{{ patient[18] }}" target="_blank">Predict</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+          </table>
+          <!-- Pagination Controls -->
+          <div id="pagination" class="mt-3">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" id="prev-page"><a class="page-link" href="#" onclick="prevPage(event)">Previous</a></li>
+                    <li class="page-item" id="next-page"><a class="page-link" href="#" onclick="nextPage(event)">Next</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js" integrity="sha384-w1QKVRWX8y8AB7yZ0qH8qEosar3sGOcPtz7Hb9jYUYDzv7S3EehVbW6rYHIjhd3b" crossorigin="anonymous"></script>
+
+<script>
+    // Pagination and Search Functionality
+const rowsPerPage = 10;
+let currentPage = 1;
+let filteredRows = [];
+
+function filterTable() {
+    const searchValue = document.getElementById('search-bar').value.toLowerCase();
+    const table = document.getElementById('patient-table');
+    const rows = table.getElementsByTagName('tr');
+    filteredRows = []; // Reset filteredRows
+
+    // Reset the visibility of all rows
+    for (let i = 1; i < rows.length; i++) {
+        rows[i].style.display = '';
+        const cells = rows[i].getElementsByTagName('td');
+        const name = cells[1].innerText.toLowerCase();
+        const patientID = cells[0].innerText.toLowerCase();
+
+        if (name.includes(searchValue) || patientID.includes(searchValue)) {
+            filteredRows.push(rows[i]);
+        }
+    }
+
+    // Reset to the first page whenever filtering occurs
+    currentPage = 1;
+    paginateTable();
+}
+
+function paginateTable() {
+    const totalRows = filteredRows.length;
+    const totalPages = Math.ceil(totalRows / rowsPerPage);
+
+    // Show or hide the prev/next buttons
+    document.getElementById('prev-page').style.display = currentPage > 1 ? '' : 'none';
+    document.getElementById('next-page').style.display = currentPage < totalPages ? '' : 'none';
+
+    let start = (currentPage - 1) * rowsPerPage;
+    let end = start + rowsPerPage;
+
+    for (let i = 0; i < filteredRows.length; i++) {
+        if (i >= start && i < end) {
+            filteredRows[i].style.display = '';
+        } else {
+            filteredRows[i].style.display = 'none';
+        }
+    }
+}
+
+function prevPage(event) {
+    event.preventDefault();
+    if (currentPage > 1) {
+        currentPage--;
+        paginateTable();
+    }
+}
+
+function nextPage(event) {
+    event.preventDefault();
+    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+    if (currentPage < totalPages) {
+        currentPage++;
+        paginateTable();
+    }
+}
+
+window.onload = function() {
+    filterTable(); // Initial filtering and pagination
+}
+
+</script>
+
+</body>
+</html>
